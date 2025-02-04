@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Image Cropper</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #1d4ed8;
+            --background: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            background: var(--background);
+            color: var(--text);
+            display: grid;
+            place-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .container:hover {
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .header h1:hover {
+            transform: scale(1.05);
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--primary);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+        }
+
+        .btn:hover::after {
+            width: 200px;
+            height: 200px;
+        }
+
+        .btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .image-container {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f1f5f9;
+            min-height: 400px;
+            display: grid;
+            place-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .image-container:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #image {
+            max-width: 100%;
+            max-height: 70vh;
+            transition: transform 0.3s ease;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .preset-btn {
+            aspect-ratio: 1;
+            background: #f1f5f9;
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .preset-btn::before {
+            content: attr(data-label);
+            position: absolute;
+            font-size: 0.9rem;
+        }
+
+        .preset-btn::after {
+            content: '';
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            border: 2px dashed #cbd5e1;
+            transition: all 0.2s;
+        }
+
+        .preset-btn[data-ratio="1"]::after {
+            aspect-ratio: 1;
+        }
+
+        .preset-btn[data-ratio="4/3"]::after {
+            aspect-ratio: 4/3;
+        }
+
+        .preset-btn[data-ratio="16/9"]::after {
+            aspect-ratio: 16/9;
+        }
+
+        .preset-btn[data-ratio="NaN"]::after {
+            border-style: dotted;
+        }
+
+        .preset-btn:hover {
+            background: #e2e8f0;
+            transform: scale(1.05);
+        }
+
+        .preset-btn.active {
+            border-color: var(--primary);
+            background: #bfdbfe;
+        }
+
+        .control-group {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+
+        .control-group:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .slider-container {
+            margin: 1rem 0;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+            transition: all 0.2s;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .preview-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .preview-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #preview {
+            width: 100%;
+            height: 200px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .filters-group {
+            margin-top: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .dropzone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .dropzone.dragover {
+            background: #e2e8f0;
+            border-color: var(--primary);
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-crop-alt"></i> Modern Image Cropper</h1>
+            <p>Drag and drop your image or click to upload</p>
+        </div>
+
+        <div class="dropzone" id="dropzone">
+            <i class="fas fa-cloud-upload-alt fa-3x"></i>
+            <p>Drag & Drop your image here or click to browse</p>
+            <input type="file" id="upload" accept="image/*" hidden>
+        </div>
+
+        <div class="toolbar">
+            <button class="btn" id="crop-btn">
+                <i class="fas fa-crop"></i> Crop
+            </button>
+            <button class="btn" id="rotate-left">
+                <i class="fas fa-undo"></i> Rotate Left
+            </button>
+            <button class="btn" id="rotate-right">
+                <i class="fas fa-redo"></i> Rotate Right
+            </button>
+            <button class="btn" id="flip-horizontal">
+                <i class="fas fa-arrows-alt-h"></i> Flip H
+            </button>
+            <button class="btn" id="flip-vertical">
+                <i class="fas fa-arrows-alt-v"></i> Flip V
+            </button>
+            <button class="btn" id="reset">
+                <i class="fas fa-sync"></i> Reset
+            </button>
+        </div>
+
+        <div class="image-container">
+            <div class="loading"></div>
+            <img id="image" src="" alt="Uploaded Image">
+        </div>
+
+        <div class="advanced-controls">
+            <div class="control-group">
+                <h3><i class="fas fa-ruler-combined"></i> Aspect Ratios</h3>
+                <div class="preset-grid">
+                    <div class="preset-btn" data-ratio="1" data-label="1:1"></div>
+                    <div class="preset-btn" data-ratio="4/3" data-label="4:3"></div>
+                    <div class="preset-btn" data-ratio="16/9" data-label="16:9"></div>
+                    <div class="preset-btn" data-ratio="NaN" data-label="Free"></div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3><i class="fas fa-tools"></i> Adjustments</h3>
+                <div class="slider-container">
+                    <label>Brightness: <span id="brightness-value">0</span></label>
+                    <input type="range" class="slider" id="brightness" min="-1" max="1" step="0.1" value="0">
+                </div>
+                <div class="slider-container">
+                    <label>Contrast: <span id="contrast-value">0</span></label>
+                    <input type="range" class="slider" id="contrast" min="-1" max="1" step="0.1" value="0">
+                </div>
+                <div class="slider-container">
+                    <label>Zoom: <span id="zoom-value">100%</span></label>
+                    <input type="range" class="slider" id="zoom" min="0.1" max="3" step="0.1" value="1">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3><i class="fas fa-magic"></i> Filters</h3>
+                <div class="filters-group">
+                    <button class="filter-btn active" data-filter="none">Normal</button>
+                    <button class="filter-btn" data-filter="grayscale">Grayscale</button>
+                    <button class="filter-btn" data-filter="sepia">Sepia</button>
+                    <button class="filter-btn" data-filter="blur">Blur</button>
+                    <button class="filter-btn" data-filter="sharpen">Sharpen</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-container">
+            <div class="preview-card">
+                <h4><i class="fas fa-image"></i> Preview</h4>
+                <div id="preview"></div>
+            </div>
+            <div class="preview-card">
+                <h4><i class="fas fa-download"></i> Export</h4>
+                <div class="toolbar" style="margin-top: 1rem;">
+                    <select class="btn" id="format">
+                        <option value="png">PNG</option>
+                        <option value="jpeg">JPEG</option>
+                        <option value="webp">WebP</option>
+                    </select>
+                      <input type="number" class="btn" id="width" placeholder="Width" min="1" max="10000">
+                    <input type="number" class="btn" id="height" placeholder="Height" min="1" max="10000">
+                    <button class="btn" id="download">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
+                <div class="slider-container" style="margin-top: 1rem;">
+                    <label>Quality: <span id="quality-value">100%</span></label>
+                    <input type="range" class="slider" id="quality" min="0" max="1" step="0.1" value="1">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+    <script>
+        let cropper;
+        const dropzone = document.getElementById('dropzone');
+        const loading = document.querySelector('.loading');
+        let currentFilter = 'none';
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function initCropper(image) {
+            if (cropper) cropper.destroy();
+            
+            cropper = new Cropper(image, {
+                aspectRatio: NaN,
+                viewMode: 1,
+                preview: '#preview',
+                autoCropArea: 0.8,
+                responsive: true,
+                background: false,
+                guides: true,
+                highlight: false,
+                movable: true,
+                rotatable: true,
+                zoomable: true,
+                ready() {
+                    loading.style.display = 'none';
+                }
+            });
+        }
+
+        // Drag and Drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, () => {
+                dropzone.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, () => {
+                dropzone.classList.remove('dragover');
+            });
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+
+        dropzone.addEventListener('click', () => {
+            document.getElementById('upload').click();
+        });
+
+        // File Upload
+        document.getElementById('upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showToast('Please upload an image file');
+                return;
+            }
+
+            loading.style.display = 'block';
+            const reader = new FileReader();
+            
+            reader.onload = function(event) {
+                const image = document.getElementById('image');
+                image.src = event.target.result;
+                
+                EXIF.getData(file, function() {
+                    const orientation = EXIF.getTag(this, 'Orientation');
+                    image.style.transform = orientation === 6 ? 'rotate(90deg)' :
+                                           orientation === 8 ? 'rotate(-90deg)' :
+                                           orientation === 3 ? 'rotate(180deg)' : '';
+                });
+
+                initCropper(image);
+                dropzone.style.display = 'none';
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        // Aspect Ratios
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const ratio = this.dataset.ratio === 'NaN' ? NaN : eval(this.dataset.ratio);
+                cropper.setAspectRatio(ratio);
+            });
+        });
+
+        // Image Adjustments
+        document.getElementById('brightness').addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            document.getElementById('brightness-value').textContent = value.toFixed(1);
+            applyFilters();
+        });
+
+        document.getElementById('contrast').addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            document.getElementById('contrast-value').textContent = value.toFixed(1);
+            applyFilters();
+        });
+
+        document.getElementById('zoom').addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            document.getElementById('zoom-value').textContent = `${(value * 100).toFixed(0)}%`;
+            if (cropper) {
+                cropper.zoomTo(value);
+            }
+        });
+
+        // Filters
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                applyFilters();
+            });
+        });
+
+        function applyFilters() {
+            if (!cropper) return;
+            
+            const brightness = 1 + parseFloat(document.getElementById('brightness').value);
+            const contrast = 1 + parseFloat(document.getElementById('contrast').value);
+            let filterValue = `brightness(${brightness}) contrast(${contrast})`;
+            
+            switch(currentFilter) {
+                case 'grayscale':
+                    filterValue += ' grayscale(1)';
+                    break;
+                case 'sepia':
+                    filterValue += ' sepia(1)';
+                    break;
+                case 'blur':
+                    filterValue += ' blur(2px)';
+                    break;
+                case 'sharpen':
+                    filterValue += ' contrast(1.5) brightness(0.9)';
+                    break;
+            }
+            
+            cropper.canvas.style.filter = filterValue;
+        }
+
+        // Rotation and Flip Controls
+        document.getElementById('rotate-left').addEventListener('click', () => cropper.rotate(-90));
+        document.getElementById('rotate-right').addEventListener('click', () => cropper.rotate(90));
+        document.getElementById('flip-horizontal').addEventListener('click', () => cropper.scaleX(-cropper.getData().scaleX || -1));
+        document.getElementById('flip-vertical').addEventListener('click', () => cropper.scaleY(-cropper.getData().scaleY || -1));
+        document.getElementById('reset').addEventListener('click', () => {
+            cropper.reset();
+            document.getElementById('brightness').value = 0;
+            document.getElementById('contrast').value = 0;
+            document.getElementById('zoom').value = 1;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.filter-btn[data-filter="none"]').classList.add('active');
+            currentFilter = 'none';
+            applyFilters();
+        });
+
+        // Download Handling
+        document.getElementById('download').addEventListener('click', async function() {
+            if (!cropper) {
+                showToast('Please upload an image first');
+                return;
+            }
+
+            try {
+                const format = document.getElementById('format').value;
+                const quality = parseFloat(document.getElementById('quality').value);
+                const width = parseInt(document.getElementById('width').value) || null;
+                const height = parseInt(document.getElementById('height').value) || null;
+                
+                let options = {
+                    width: width,
+                    height: height,
+                    maxWidth: 4096,
+                    maxHeight: 4096,
+                    fillColor: '#fff',
+                    imageSmoothingEnabled: true,
+                    imageSmoothingQuality: 'high'
+                };
+
+                // Get the cropped canvas
+                const croppedCanvas = cropper.getCroppedCanvas(options);
+                
+                // Create a new canvas for the final image with filters
+                const finalCanvas = document.createElement('canvas');
+                const ctx = finalCanvas.getContext('2d');
+                finalCanvas.width = croppedCanvas.width;
+                finalCanvas.height = croppedCanvas.height;
+                
+                // Apply current filters
+                ctx.filter = cropper.canvas.style.filter || 'none';
+                ctx.drawImage(croppedCanvas, 0, 0);
+
+                // Convert to blob with proper MIME type and quality
+                const mimeType = `image/${format}`;
+                const blob = await new Promise(resolve => {
+                    if (format === 'png') {
+                        finalCanvas.toBlob(resolve, mimeType); // PNG doesn't use quality
+                    } else {
+                        finalCanvas.toBlob(resolve, mimeType, quality);
+                    }
+                });
+
+                // Create download link
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const fileName = `cropped-image-${timestamp}.${format}`;
+                
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                
+                // Cleanup
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+                
+                showToast('Image downloaded successfully!');
+            } catch (error) {
+                console.error('Download error:', error);
+                showToast('Error downloading image. Please try again.');
+            }
+        });
+
+        // Quality Display
+        document.getElementById('quality').addEventListener('input', function() {
+            document.getElementById('quality-value').textContent = 
+                `${Math.round(this.value * 100)}%`;
+        });
+    </script>
+</body>
+</html>
