@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Image Cropper</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #4f46e5;
+            --accent: #8b5cf6;
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(45deg, #1a1a1a, #2d2d2d);
+            color: white;
+            display: grid;
+            place-items: center;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1400px;
+            padding: 2rem;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transform: perspective(1000px) rotateX(5deg);
+            transition: transform 0.3s;
+        }
+
+        .container:hover {
+            transform: perspective(1000px) rotateX(0);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .image-container {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+            border-radius: 15px;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        #image {
+            max-width: 100%;
+            display: block;
+            transition: transform 0.3s;
+        }
+
+        .preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .preview-card {
+            background: var(--glass);
+            padding: 1rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .advanced-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .control-group {
+            background: var(--glass);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .slider-container {
+            margin: 1rem 0;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        .preset-btn {
+            aspect-ratio: 1;
+            background: var(--glass);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .preset-btn.active {
+            border-color: var(--accent);
+            transform: scale(1.05);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--glass);
+            padding: 2rem;
+            border-radius: 15px;
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1001;
+            place-items: center;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--primary);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-crop-alt"></i> Ultimate Image Editor</h1>
+        </div>
+
+        <div class="toolbar">
+            <label class="btn">
+                <i class="fas fa-upload"></i> Upload
+                <input type="file" id="upload" accept="image/*" hidden>
+            </label>
+            <button class="btn" id="crop-btn">
+                <i class="fas fa-crop"></i> Crop
+            </button>
+            <button class="btn" id="rotate-left">
+                <i class="fas fa-undo"></i> Rotate Left
+            </button>
+            <button class="btn" id="rotate-right">
+                <i class="fas fa-redo"></i> Rotate Right
+            </button>
+            <button class="btn" id="filters-btn">
+                <i class="fas fa-sliders-h"></i> Filters
+            </button>
+        </div>
+
+        <div class="image-container">
+            <img id="image" src="" alt="Uploaded Image">
+        </div>
+
+        <div class="advanced-controls">
+            <div class="control-group">
+                <h3><i class="fas fa-ruler-combined"></i> Aspect Ratios</h3>
+                <div class="preset-grid">
+                    <div class="preset-btn" data-ratio="1"></div>
+                    <div class="preset-btn" data-ratio="4/3"></div>
+                    <div class="preset-btn" data-ratio="16/9"></div>
+                    <div class="preset-btn" data-ratio="free"></div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3><i class="fas fa-tools"></i> Adjustments</h3>
+                <div class="slider-container">
+                    <label>Brightness</label>
+                    <input type="range" class="slider" id="brightness" min="-1" max="1" step="0.1" value="0">
+                </div>
+                <div class="slider-container">
+                    <label>Contrast</label>
+                    <input type="range" class="slider" id="contrast" min="-1" max="1" step="0.1" value="0">
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-container">
+            <div class="preview-card">
+                <h4><i class="fas fa-image"></i> Preview</h4>
+                <div id="preview"></div>
+            </div>
+            <div class="preview-card">
+                <h4><i class="fas fa-history"></i> History</h4>
+                <div id="history"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="filters-modal">
+        <div class="modal-content">
+            <h2>Image Filters</h2>
+            <!-- Filter controls would go here -->
+            <button class="btn" id="close-modal">Close</button>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+    <script>
+        let cropper;
+        const stateHistory = [];
+        let currentState = -1;
+
+        // Enhanced Cropper Initialization
+        function initCropper(image) {
+            cropper = new Cropper(image, {
+                aspectRatio: NaN,
+                viewMode: 1,
+                preview: '#preview',
+                autoCropArea: 1,
+                responsive: true,
+                restore: false,
+                checkCrossOrigin: false,
+                background: false,
+                modal: true,
+                guides: false,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+                ready() {
+                    showLoading(false);
+                    updateHistory();
+                }
+            });
+        }
+
+        // State Management
+        function updateHistory() {
+            stateHistory.push(cropper.getData());
+            currentState = stateHistory.length - 1;
+        }
+
+        function undo() {
+            if (currentState > 0) {
+                currentState--;
+                cropper.setData(stateHistory[currentState]);
+            }
+        }
+
+        function redo() {
+            if (currentState < stateHistory.length - 1) {
+                currentState++;
+                cropper.setData(stateHistory[currentState]);
+            }
+        }
+
+        // Image Processing
+        function applyFilters() {
+            const brightness = parseFloat(document.getElementById('brightness').value);
+            const contrast = parseFloat(document.getElementById('contrast').value);
+            
+            cropper.setData({
+                brightness,
+                contrast
+            });
+        }
+
+        // Event Listeners
+        document.getElementById('upload').addEventListener('change', function(e) {
+            showLoading(true);
+            const file = e.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const image = document.getElementById('image');
+                image.src = event.target.result;
+                
+                // Handle EXIF Orientation
+                EXIF.getData(file, function() {
+                    const orientation = EXIF.getTag(this, 'Orientation');
+                    if (orientation && orientation !== 1) {
+                        image.style.transform = `rotate(${orientation === 6 ? 90 : orientation === 8 ? -90 : 0}deg)`;
+                    }
+                });
+
+                if (cropper) cropper.destroy();
+                initCropper(image);
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+        // Preset Ratios
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const ratio = this.dataset.ratio;
+                cropper.setAspectRatio(ratio === 'free' ? NaN : eval(ratio));
+            });
+        });
+
+        // Adjustments
+        document.querySelectorAll('.slider').forEach(slider => {
+            slider.addEventListener('input', applyFilters);
+        });
+
+        // UI Functions
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'grid' : 'none';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('image').style.transform = 'perspective(1000px) rotateY(20deg)';
+        });
+    </script>
+</body>
+</html>
