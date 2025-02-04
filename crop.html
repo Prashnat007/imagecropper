@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Image Cropper</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #1d4ed8;
+            --background: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            background: var(--background);
+            color: var(--text);
+            display: grid;
+            place-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--primary);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--secondary);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .image-container {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f1f5f9;
+            min-height: 400px;
+            display: grid;
+            place-items: center;
+        }
+
+        #image {
+            max-width: 100%;
+            max-height: 70vh;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .preset-btn {
+            aspect-ratio: 1;
+            background: #f1f5f9;
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .preset-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .preset-btn.active {
+            border-color: var(--primary);
+            background: #bfdbfe;
+        }
+
+        .control-group {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .slider-container {
+            margin: 1rem 0;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .preview-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        #preview {
+            width: 100%;
+            height: 200px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-crop-alt"></i> Modern Image Cropper</h1>
+        </div>
+
+        <div class="toolbar">
+            <label class="btn">
+                <i class="fas fa-upload"></i> Upload
+                <input type="file" id="upload" accept="image/*" hidden>
+            </label>
+            <button class="btn" id="crop-btn">
+                <i class="fas fa-crop"></i> Crop
+            </button>
+            <button class="btn" id="rotate-left">
+                <i class="fas fa-undo"></i> Rotate Left
+            </button>
+            <button class="btn" id="rotate-right">
+                <i class="fas fa-redo"></i> Rotate Right
+            </button>
+        </div>
+
+        <div class="image-container">
+            <img id="image" src="" alt="Uploaded Image">
+        </div>
+
+        <div class="advanced-controls">
+            <div class="control-group">
+                <h3><i class="fas fa-ruler-combined"></i> Aspect Ratios</h3>
+                <div class="preset-grid">
+                    <div class="preset-btn" data-ratio="1">1:1</div>
+                    <div class="preset-btn" data-ratio="4/3">4:3</div>
+                    <div class="preset-btn" data-ratio="16/9">16:9</div>
+                    <div class="preset-btn" data-ratio="NaN">Free</div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3><i class="fas fa-tools"></i> Adjustments</h3>
+                <div class="slider-container">
+                    <label>Brightness</label>
+                    <input type="range" class="slider" id="brightness" min="-1" max="1" step="0.1" value="0">
+                </div>
+                <div class="slider-container">
+                    <label>Contrast</label>
+                    <input type="range" class="slider" id="contrast" min="-1" max="1" step="0.1" value="0">
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-container">
+            <div class="preview-card">
+                <h4><i class="fas fa-image"></i> Preview</h4>
+                <div id="preview"></div>
+            </div>
+            <div class="preview-card">
+                <h4><i class="fas fa-download"></i> Export</h4>
+                <div class="toolbar" style="margin-top: 1rem;">
+                    <select class="btn" id="format">
+                        <option value="png">PNG</option>
+                        <option value="jpeg">JPEG</option>
+                        <option value="webp">WebP</option>
+                    </select>
+                    <button class="btn" id="download">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
+                <div class="slider-container" style="margin-top: 1rem;">
+                    <label>Quality: <span id="quality-value">100%</span></label>
+                    <input type="range" class="slider" id="quality" min="0" max="1" step="0.1" value="1">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+    <script>
+        let cropper;
+
+        function initCropper(image) {
+            if (cropper) cropper.destroy();
+            
+            cropper = new Cropper(image, {
+                aspectRatio: NaN,
+                viewMode: 1,
+                preview: '#preview',
+                autoCropArea: 0.8,
+                responsive: true,
+                background: false,
+                guides: true,
+                highlight: false,
+                movable: true,
+                rotatable: true,
+                zoomable: true,
+            });
+        }
+
+        // File Upload
+        document.getElementById('upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const image = document.getElementById('image');
+                image.src = event.target.result;
+                
+                // Reset EXIF orientation
+                EXIF.getData(file, function() {
+                    const orientation = EXIF.getTag(this, 'Orientation');
+                    image.style.transform = orientation === 6 ? 'rotate(90deg)' :
+                                           orientation === 8 ? 'rotate(-90deg)' :
+                                           orientation === 3 ? 'rotate(180deg)' : '';
+                });
+
+                initCropper(image);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Aspect Ratios
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const ratio = this.dataset.ratio === 'NaN' ? NaN : eval(this.dataset.ratio);
+                cropper.setAspectRatio(ratio);
+            });
+        });
+
+        // Image Adjustments
+        document.getElementById('brightness').addEventListener('input', function() {
+            if (cropper) {
+                cropper.canvas.style.filter = `brightness(${1 + parseFloat(this.value)})`;
+            }
+        });
+
+        document.getElementById('contrast').addEventListener('input', function() {
+            if (cropper) {
+                cropper.canvas.style.filter = `contrast(${1 + parseFloat(this.value)})`;
+            }
+        });
+
+        // Rotation Controls
+        document.getElementById('rotate-left').addEventListener('click', () => cropper.rotate(-90));
+        document.getElementById('rotate-right').addEventListener('click', () => cropper.rotate(90));
+
+        // Download Handling
+        document.getElementById('download').addEventListener('click', function() {
+            const format = document.getElementById('format').value;
+            const quality = parseFloat(document.getElementById('quality').value);
+            const croppedCanvas = cropper.getCroppedCanvas();
+            
+            croppedCanvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `cropped-image.${format}`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }, `image/${format}`, quality);
+        });
+
+        // Quality Display
+        document.getElementById('quality').addEventListener('input', function() {
+            document.getElementById('quality-value').textContent = 
+                `${Math.round(this.value * 100)}%`;
+        });
+
+        // Initialize Crop button
+        document.getElementById('crop-btn').addEventListener('click', function() {
+            if (!cropper) return;
+            const croppedCanvas = cropper.getCroppedCanvas();
+            const image = document.getElementById('image');
+            image.src = croppedCanvas.toDataURL();
+            initCropper(image);
+        });
+    </script>
+</body>
+</html>
